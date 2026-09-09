@@ -2,6 +2,8 @@ name: ci
 on:
   push:
     branches: [staging, production]
+  pull_request:
+    branches: [production]
   workflow_dispatch:
 
 permissions:
@@ -13,6 +15,17 @@ env:
   KUSTOMIZE_VERSION: v5.7.1
 
 jobs:
+  promote-guard:
+    # Hotfix direto para production e permitido; qualquer outra origem, nao.
+    # Roda em PR para production e reprova se o head nao for staging nem hotfix/*.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          case "${{ github.head_ref }}" in
+            staging|hotfix/*) echo "origem permitida: ${{ github.head_ref }}" ;;
+            *) echo "PR para production so de staging ou hotfix/* (veio de '${{ github.head_ref }}')"; exit 1 ;;
+          esac
   build:
     runs-on: ubuntu-latest
     outputs:

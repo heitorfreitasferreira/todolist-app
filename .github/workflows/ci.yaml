@@ -12,7 +12,6 @@ permissions:
 
 env:
   IMAGE: ghcr.io/heitorfreitasferreira/todolist-app
-  KUSTOMIZE_VERSION: v5.7.1
 
 jobs:
   promote-guard:
@@ -63,20 +62,23 @@ jobs:
           repository: heitorfreitasferreira/cesar-challenge
           ref: main
           token: ${{ secrets.GITOPS_BUMP_TOKEN }}
-      - name: Instalar kustomize pinado
+      - name: Pin digest no overlay (update cirurgico: so newTag+digest)
         run: |
-          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" -o /tmp/kustomize.tar.gz
-          tar -xzf /tmp/kustomize.tar.gz -C /tmp
-          sudo install -m 755 /tmp/kustomize /usr/local/bin/kustomize
-          kustomize version
-        env:
-          KUSTOMIZE_VERSION: ${{ env.KUSTOMIZE_VERSION }}
-      - name: Pin digest no overlay (kustomize edit, idempotente)
-        run: |
-          cd k8s/overlays/${{ steps.overlay.outputs.name }}
-          kustomize edit set image "$IMAGE=$IMAGE@${{ needs.build.outputs.digest }}"
-          kustomize build . > /dev/null && echo "overlay valido"
-          git diff
+          python3 - "$IMAGE" "${{ github.sha }}" "${{ needs.build.outputs.digest }}" <<'EOF'
+          import re, sys
+          image, sha, digest = sys.argv[1], sys.argv[2], sys.argv[3]
+          p = "k8s/overlays/${{ steps.overlay.outputs.name }}/kustomization.yaml"
+          s = open(p).read()
+          assert f"name: {image}\n" in s, "bloco images ausente no overlay"
+          # So as duas linhas escalares: formato/comentarios preservados.
+          s2, n1 = re.subn(r"(?m)^( +newTag: ).*$", rf"\g<1>{sha}", s, count=1)
+          s2, n2 = re.subn(r"(?m)^( +digest: ).*$", rf"\g<1>{digest}", s2, count=1)
+          assert (n1, n2) == (1, 1), "newTag/digest nao encontrados"
+          open(p, "w").write(s2)
+          print(open(p).read())
+          EOF
+      - name: Validar overlay (YAML parseavel)
+        run: python3 -c "import yaml; yaml.safe_load(open('k8s/overlays/${{ steps.overlay.outputs.name }}/kustomization.yaml')); print('overlay valido')"
       - name: Commit do bump (com retry de rebase)
         run: |
           git config user.name "ci-bump"

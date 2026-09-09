@@ -45,13 +45,12 @@ jobs:
           python3 - "$IMAGE" "${{ github.sha }}" "${{ needs.build.outputs.digest }}" <<'EOF'
           import re, sys
           image, sha, digest = sys.argv[1], sys.argv[2], sys.argv[3]
-          short = digest.split(":", 1)[1] if ":" in digest else digest
           p = "k8s/overlays/desafio/kustomization.yaml"
           s = open(p).read()
           block = f"""images:
             - name: {image}
               newTag: {sha}
-              digest: {short}
+              digest: {digest}
           """
           s2 = re.sub(r"images:\n(?:  .*\n?)+", block, s)
           open(p, "w").write(s2)

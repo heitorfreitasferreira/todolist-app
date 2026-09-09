@@ -62,7 +62,7 @@ jobs:
           repository: heitorfreitasferreira/cesar-challenge
           ref: main
           token: ${{ secrets.GITOPS_BUMP_TOKEN }}
-      - name: Pin digest no overlay (update cirurgico: so newTag+digest)
+      - name: "Pin digest no overlay (update cirurgico: so newTag+digest)"
         run: |
           python3 - "$IMAGE" "${{ github.sha }}" "${{ needs.build.outputs.digest }}" <<'EOF'
           import re, sys

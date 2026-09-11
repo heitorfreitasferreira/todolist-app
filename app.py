@@ -4,12 +4,31 @@ from flask import Flask, request, redirect, render_template_string, session
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
 from urllib.parse import quote_plus
+from logging_json import JsonFormatter
 import logging
 import os
 import requests as http
 from datetime import datetime
 
 SECRETS_DIR = os.environ.get('SECRETS_DIR', '/var/run/secrets/todolist')
+
+
+def _configure_logging():
+    """Logs em JSON no stdout (coletados por Alloy -> Loki).
+
+    Configura o logger raiz: app.logger (Flask) e logging.getLogger(__name__)
+    propagam para ca. Os loggers do gunicorn tem propagate=False e sao
+    formatados pelo JsonGunicornLogger (gunicorn.conf.py).
+    """
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(os.environ.get('LOG_LEVEL', 'INFO').upper())
+
+
+_configure_logging()
+
 
 def _config(name, default=''):
     """Reads a value from a file in SECRETS_DIR, falling back to the environment.

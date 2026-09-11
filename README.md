@@ -72,7 +72,8 @@ Valor ausente ou inválido resulta no tema cinza.
 | `/add` | POST | Sessão | Cria uma tarefa |
 | `/toggle/<id>` | POST | Sessão | Alterna a tarefa entre feita e pendente |
 | `/delete/<id>` | POST | Sessão | Remove uma tarefa |
-| `/healthz` | GET | — | Verifica a conexão com o banco e responde `ok` |
+| `/healthz` | GET | — | Readiness: verifica a conexão com o banco e responde `ok` (ou `503`) |
+| `/livez` | GET | — | Liveness: responde `ok` sem tocar no banco |
 | `/cleanup` | POST | Header `X-Cleanup-Token` | Remove todas as tarefas concluídas e responde com a quantidade removida |
 | `/pods` | GET | Sessão | Lista os pods do namespace |
 | `/cleanup/status` | GET, POST | Sessão | Histórico das execuções de limpeza. O POST suspende ou retoma o agendamento |
@@ -91,6 +92,38 @@ endpoint responde `401`.
 
 A página `/cleanup/status` mostra o resultado das últimas execuções e permite pausar e retomar
 o agendamento.
+
+## Observabilidade e execução em Kubernetes (adições a este fork)
+
+Mudanças **aditivas** feitas para rodar bem em Kubernetes e serem observáveis. Nenhuma rota ou
+comportamento existente foi alterado.
+
+| Adição | Onde | Por quê |
+|---|---|---|
+| `/metrics` (Prometheus) | `app.py` + `prometheus-flask-exporter` | Permitir métricas de requisição/latência por endpoint sem instrumentar rota a rota. Usa o coletor multiprocess (`PROMETHEUS_MULTIPROC_DIR`) porque o gunicorn roda com 2 workers — sem isso, cada worker exporia contadores próprios e o scrape veria números inconsistentes. |
+| `/livez` separado de `/healthz` | `app.py` | Liveness não deve depender do banco: se o Postgres cair, reiniciar o pod não resolve e causa *restart-loop*. O Kubernetes usa `/livez` para liveness e `/healthz` (que consulta o banco) para readiness. |
+| Logs em JSON | `logging_json.py`, `gunicorn.conf.py` | Permitir filtro por nível/campos no Loki (`level`, `logger`, `status`). Formatter próprio (sem dependência extra) usado no logger raiz e no logger do gunicorn. |
+| Access log do gunicorn | `gunicorn.conf.py` | Não existia access log algum; agora cada requisição vira uma linha JSON com método, path, status e duração. |
+| `LOG_LEVEL` | `app.py` | Ajustar verbosidade por ambiente sem rebuild. |
+| Usuário não-root no container | `Dockerfile` | Boa prática: gunicorn na 5000 não precisa de privilégio. |
+
+### Variáveis adicionadas
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `LOG_LEVEL` | `INFO` | Nível do logger raiz (`DEBUG`, `INFO`, `WARNING`, `ERROR`). |
+| `PROMETHEUS_MULTIPROC_DIR` | *(vazio)* | Diretório do coletor multiprocess (definido no Deployment). Sem ele, usa o exporter single-process. |
+
+### Testes
+
+```bash
+# Requer um PostgreSQL acessível (variáveis DB_* ou SECRETS_DIR)
+pip install -r requirements.txt -r requirements-dev.txt
+pytest -q
+```
+
+Cobrem probes (`/livez`, `/healthz`), auth, CRUD de tarefa, deduplicação, `/metrics` e o token do
+`/cleanup`. No CI rodam contra um Postgres como *service container*.
 
 ## Executando localmente
 

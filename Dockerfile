@@ -7,6 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
+COPY logging_json.py .
+COPY gunicorn.conf.py .
 COPY assets/ ./assets/
 
 # Nao rodar como root: gunicorn na 5000 nao precisa de privilegio.
@@ -14,4 +16,4 @@ RUN useradd -r -u 10001 app && chown -R app:app /app
 USER 10001
 
 EXPOSE 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "app:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]

@@ -35,6 +35,17 @@ DB_PASSWORD = _config('DB_PASSWORD', '')
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
+
+# Observabilidade (aditivo): expoe /metrics para o Prometheus. Sob gunicorn
+# com multiplos workers usa o coletor multiprocess (PROMETHEUS_MULTIPROC_DIR);
+# sem a variavel (dev local) usa o exporter single-process.
+if os.environ.get('PROMETHEUS_MULTIPROC_DIR'):
+    from prometheus_flask_exporter.multiprocess import GunicornInternalPrometheusMetrics
+    metrics = GunicornInternalPrometheusMetrics(app)
+else:
+    from prometheus_flask_exporter import PrometheusMetrics
+    metrics = PrometheusMetrics(app)
+
 app.secret_key = _config('SESSION_KEY', 'dev-only-insecure-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     f'postgresql://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}'

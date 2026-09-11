@@ -963,8 +963,18 @@ def delete(todo_id):
     db.session.commit()
     return redirect('/')
 
+@app.route('/livez')
+def live():
+    """Liveness: processo vivo. NAO toca no banco de proposito.
+
+    Se o banco cair, o pod esta sadio (o k8s nao deve reinicia-lo): quem
+    segura trafego e a readiness (/healthz). Ver deployment probes.
+    """
+    return 'ok', 200
+
 @app.route('/healthz')
 def health():
+    """Readiness: so recebe trafego se o banco responde."""
     try:
         db.session.execute(db.text('SELECT 1'))
         return 'ok', 200

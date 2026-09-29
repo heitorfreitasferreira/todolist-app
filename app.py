@@ -67,7 +67,7 @@ else:
 
 app.secret_key = _config('SESSION_KEY', 'dev-only-insecure-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f'postgresql://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}'
+    f'postgresql+psycopg2://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}'
     f'@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 )
 db = SQLAlchemy(app)

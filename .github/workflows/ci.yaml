@@ -86,7 +86,7 @@ jobs:
           esac
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          repository: heitorfreitasferreira/cesar-challenge
+          repository: heitorfreitasferreira/k8s-gitops-platform
           ref: main
           token: ${{ secrets.GITOPS_BUMP_TOKEN }}
       - name: "Pin digest no overlay (update cirurgico: so newTag+digest)"

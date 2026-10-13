@@ -93,9 +93,9 @@ endpoint responde `401`.
 A página `/cleanup/status` mostra o resultado das últimas execuções e permite pausar e retomar
 o agendamento.
 
-## Observabilidade e execução em Kubernetes (adições a este fork)
+## Observabilidade e execução em Kubernetes
 
-Mudanças **aditivas** feitas para rodar bem em Kubernetes e serem observáveis. Nenhuma rota ou
+Mudanças feitas para rodar bem em Kubernetes e serem observáveis. Nenhuma rota ou
 comportamento existente foi alterado.
 
 | Adição | Onde | Por quê |

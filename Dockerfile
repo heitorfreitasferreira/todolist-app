@@ -16,4 +16,6 @@ RUN useradd -r -u 10001 app && chown -R app:app /app
 USER 10001
 
 EXPOSE 5000
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:app"]
+# `opentelemetry-instrument` liga a auto-instrumentacao (Flask + SQLAlchemy) e
+# sobe o gunicorn. O export OTLP e configurado por env (OTEL_*).
+CMD ["opentelemetry-instrument", "gunicorn", "-c", "gunicorn.conf.py", "app:app"]

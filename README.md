@@ -104,6 +104,8 @@ comportamento existente foi alterado.
 | `/livez` separado de `/healthz` | `app.py` | Liveness não deve depender do banco: se o Postgres cair, reiniciar o pod não resolve e causa *restart-loop*. O Kubernetes usa `/livez` para liveness e `/healthz` (que consulta o banco) para readiness. |
 | Logs em JSON | `logging_json.py`, `gunicorn.conf.py` | Permitir filtro por nível/campos no Loki (`level`, `logger`, `status`). Formatter próprio (sem dependência extra) usado no logger raiz e no logger do gunicorn. |
 | Access log do gunicorn | `gunicorn.conf.py` | Não existia access log algum; agora cada requisição vira uma linha JSON com método, path, status e duração. |
+| Tracing (OpenTelemetry) | `Dockerfile` + `requirements.txt` | O entrypoint passa a ser `opentelemetry-instrument gunicorn ...`. A auto-instrumentação cobre Flask (span HTTP) e SQLAlchemy (span do banco) e exporta OTLP para o collector. Nenhuma rota mudou. |
+| `trace_id`/`span_id` no log | `logging_json.py` | Quando há um span ativo, o log JSON ganha `trace_id` e `span_id`, o que liga o log no Loki ao trace no Tempo no Grafana. |
 | `LOG_LEVEL` | `app.py` | Ajustar verbosidade por ambiente sem rebuild. |
 | Usuário não-root no container | `Dockerfile` | Boa prática: gunicorn na 5000 não precisa de privilégio. |
 
@@ -113,6 +115,12 @@ comportamento existente foi alterado.
 |---|---|---|
 | `LOG_LEVEL` | `INFO` | Nível do logger raiz (`DEBUG`, `INFO`, `WARNING`, `ERROR`). |
 | `PROMETHEUS_MULTIPROC_DIR` | *(vazio)* | Diretório do coletor multiprocess (definido no Deployment). Sem ele, usa o exporter single-process. |
+| `OTEL_SERVICE_NAME` | *(vazio)* | Nome do serviço nos traces. Definido como `todolist`. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(vazio)* | Endpoint do OTel Collector (`http://otel-collector.observability.svc.cluster.local:4317`). |
+| `OTEL_TRACES_EXPORTER` | `otlp` | Exporta os spans por OTLP. |
+| `OTEL_METRICS_EXPORTER` / `OTEL_LOGS_EXPORTER` | `otlp` | Desligados (`none`): métricas ficam no Prometheus e logs no Loki. |
+
+Sem `OTEL_EXPORTER_OTLP_ENDPOINT` a instrumentação não exporta nada e a aplicação roda igual.
 
 ### Testes
 

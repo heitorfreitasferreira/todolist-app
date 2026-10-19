@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "timezone": "America/Sao_Paulo",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "description": "Automerge de patch e digest quando o CI estiver verde (o Renovate so mergeia com os checks do PR verdes)",
+      "matchUpdateTypes": ["patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Minor e major pedem review manual",
+      "matchUpdateTypes": ["minor", "major"],
+      "automerge": false
+    },
+    {
+      "description": "Base do Dockerfile e actions agrupados",
+      "matchManagers": ["dockerfile", "github-actions"],
+      "groupName": "imagem e actions"
+    }
+  ]
+}

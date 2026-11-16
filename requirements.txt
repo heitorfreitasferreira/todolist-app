@@ -9,7 +9,7 @@ gunicorn==23.0.0
 prometheus-flask-exporter==0.23.2
 # Tracing (OTel): auto-instrumentacao de Flask + SQLAlchemy, export OTLP gRPC.
 # A app exporta para o OTel Collector, que grava no Tempo.
-opentelemetry-distro==0.66b1
+opentelemetry-distro==0.66b2
 opentelemetry-exporter-otlp==1.45.2
-opentelemetry-instrumentation-flask==0.66b1
-opentelemetry-instrumentation-sqlalchemy==0.66b1
+opentelemetry-instrumentation-flask==0.66b2
+opentelemetry-instrumentation-sqlalchemy==0.66b2

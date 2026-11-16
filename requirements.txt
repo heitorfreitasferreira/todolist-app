@@ -2,7 +2,7 @@ flask==3.0.3
 flask-sqlalchemy==3.1.1
 # Pin 2.0.x: a instrumentacao SQLAlchemy do OTel ainda nao cobre 2.1
 # (a faixa suportada e sqlalchemy<2.1.0). O dialeto psycopg2 e explicito.
-SQLAlchemy==2.0.54
+SQLAlchemy==2.1.8
 psycopg2-binary==2.9.13
 requests==2.31.0
 gunicorn==23.0.0
